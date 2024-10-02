@@ -1,7 +1,8 @@
 % replayP1Data: Script to set up and run the digital twin to mimic the
 % behavior of P1 from a recorded data run
 
-load("~/Documents/MATLAB/p1/data/P1_Testing_2024-07-26_PM/p1_MPU_9_2024-07-26_16-31-37.mat");
+%load("~/Documents/MATLAB/p1/data/P1_Testing_2024-07-26_PM/p1_MPU_9_2024-07-26_16-31-37.mat");
+load("~/Documents/MATLAB/p1/data/P1_Testing_2024-07-26_PM/p1_MPU_10_2024-07-26_16-27-33.mat");
 parseP1data;
 
 long_speed_input = timeseries(GPS.HorSpd,rt_tout);
