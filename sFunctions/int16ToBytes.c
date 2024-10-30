@@ -26,7 +26,7 @@
  * | See matlabroot/simulink/src/sfuntmpl_doc.c for a more detailed template |
  *  -------------------------------------------------------------------------
  *
- * Created: Fri Mar 01 13:52:47 2024
+ * Created: Fri Oct 18 11:53:58 2024
  */
 
 #define S_FUNCTION_LEVEL               2
@@ -44,6 +44,7 @@
 #define INPUT_DIMS_0_COL               1
 #define INPUT_0_DTYPE                  int16_T
 #define INPUT_0_COMPLEX                COMPLEX_NO
+#define INPUT_0_UNIT                   ""
 #define IN_0_BUS_BASED                 0
 #define IN_0_BUS_NAME
 #define IN_0_DIMS                      1-D
@@ -64,6 +65,7 @@
 #define OUTPUT_DIMS_0_COL              1
 #define OUTPUT_0_DTYPE                 uint8_T
 #define OUTPUT_0_COMPLEX               COMPLEX_NO
+#define OUTPUT_0_UNIT                  ""
 #define OUT_0_BUS_BASED                0
 #define OUT_0_BUS_NAME
 #define OUT_0_DIMS                     1-D
@@ -82,6 +84,7 @@
 #define OUTPUT_DIMS_1_COL              1
 #define OUTPUT_1_DTYPE                 uint8_T
 #define OUTPUT_1_COMPLEX               COMPLEX_NO
+#define OUTPUT_1_UNIT                  ""
 #define OUT_1_BUS_BASED                0
 #define OUT_1_BUS_NAME
 #define OUT_1_DIMS                     1-D
@@ -91,28 +94,29 @@
 #define OUT_1_FRACTIONLENGTH           3
 #define OUT_1_BIAS                     0
 #define OUT_1_SLOPE                    0.125
+
 #define NPARAMS                        0
 #define SAMPLE_TIME_0                  INHERITED_SAMPLE_TIME
 #define NUM_DISC_STATES                0
 #define DISC_STATES_IC                 [0]
 #define NUM_CONT_STATES                0
 #define CONT_STATES_IC                 [0]
-#define SFUNWIZ_GENERATE_TLC           1
+#define SFUNWIZ_GENERATE_TLC           0
 #define SOURCEFILES                    "__SFB__"
 #define PANELINDEX                     N/A
 #define USE_SIMSTRUCT                  0
 #define SHOW_COMPILE_STEPS             0
-#define CREATE_DEBUG_MEXFILE           0
-#define SAVE_CODE_ONLY                 0
+#define CREATE_DEBUG_MEXFILE           1
+#define SAVE_CODE_ONLY                 1
 #define SFUNWIZ_REVISION               3.0
 
 /* %%%-SFUNWIZ_defines_Changes_END --- EDIT HERE TO _BEGIN */
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #include "simstruc.h"
 
-extern void int16ToBytes_Outputs_wrapper(const int16_T *u0,
-  uint8_T *y0,
-  uint8_T *y1);
+// extern void int16ToBytes_Outputs_wrapper(const int16_T *u0,
+//   uint8_T *y0,
+//   uint8_T *y1);
 
 /*====================*
  * S-function methods *
@@ -123,8 +127,6 @@ extern void int16ToBytes_Outputs_wrapper(const int16_T *u0,
  */
 static void mdlInitializeSizes(SimStruct *S)
 {
-  DECL_AND_INIT_DIMSINFO(inputDimsInfo);
-  DECL_AND_INIT_DIMSINFO(outputDimsInfo);
   ssSetNumSFcnParams(S, NPARAMS);
   if (ssGetNumSFcnParams(S) != ssGetSFcnParamsCount(S)) {
     return;                            /* Parameter mismatch will be reported by Simulink */
@@ -143,6 +145,28 @@ static void mdlInitializeSizes(SimStruct *S)
   ssSetInputPortComplexSignal(S, 0, INPUT_0_COMPLEX);
   ssSetInputPortDirectFeedThrough(S, 0, INPUT_0_FEEDTHROUGH);
   ssSetInputPortRequiredContiguous(S, 0, 1);/*direct input signal access*/
+
+  /*
+   * Configure the Units for Input Ports
+   */
+  if (ssGetSimMode(S) != SS_SIMMODE_SIZES_CALL_ONLY) {
+
+#if defined(MATLAB_MEX_FILE)
+
+    UnitId inUnitIdReg;
+    ssRegisterUnitFromExpr(S, INPUT_0_UNIT, &inUnitIdReg);
+    if (inUnitIdReg != INVALID_UNIT_ID) {
+      ssSetInputPortUnit(S, 0, inUnitIdReg);
+    } else {
+      ssSetLocalErrorStatus(S,
+                            "Invalid Unit provided for input port u0 of S-Function int16ToBytes");
+      return;
+    }
+
+#endif
+
+  }
+
   if (!ssSetNumOutputPorts(S, NUM_OUTPUTS))
     return;
 
@@ -155,18 +179,48 @@ static void mdlInitializeSizes(SimStruct *S)
   ssSetOutputPortWidth(S, 1, OUTPUT_1_NUM_ELEMS);
   ssSetOutputPortDataType(S, 1, SS_UINT8);
   ssSetOutputPortComplexSignal(S, 1, OUTPUT_1_COMPLEX);
+
+  /*
+   * Configure the Units for Output Ports
+   */
+  if (ssGetSimMode(S) != SS_SIMMODE_SIZES_CALL_ONLY) {
+
+#if defined(MATLAB_MEX_FILE)
+
+    UnitId outUnitIdReg;
+    ssRegisterUnitFromExpr(S, OUTPUT_0_UNIT, &outUnitIdReg);
+    if (outUnitIdReg != INVALID_UNIT_ID) {
+      ssSetOutputPortUnit(S, 0, outUnitIdReg);
+    } else {
+      ssSetLocalErrorStatus(S,
+                            "Invalid Unit provided for output port y0 of S-Function int16ToBytes");
+      return;
+    }
+
+    ssRegisterUnitFromExpr(S, OUTPUT_1_UNIT, &outUnitIdReg);
+    if (outUnitIdReg != INVALID_UNIT_ID) {
+      ssSetOutputPortUnit(S, 1, outUnitIdReg);
+    } else {
+      ssSetLocalErrorStatus(S,
+                            "Invalid Unit provided for output port y1 of S-Function int16ToBytes");
+      return;
+    }
+
+#endif
+
+  }
+
   ssSetNumPWork(S, 0);
   ssSetNumSampleTimes(S, 1);
   ssSetNumRWork(S, 0);
   ssSetNumIWork(S, 0);
   ssSetNumModes(S, 0);
   ssSetNumNonsampledZCs(S, 0);
-  ssSetSimulinkVersionGeneratedIn(S, "10.7");
+  ssSetSimulinkVersionGeneratedIn(S, "24.1");
 
   /* Take care when specifying exception free code - see sfuntmpl_doc.c */
   ssSetRuntimeThreadSafetyCompliance(S, RUNTIME_THREAD_SAFETY_COMPLIANCE_TRUE);
   ssSetOptions(S, (SS_OPTION_EXCEPTION_FREE_CODE |
-                   SS_OPTION_USE_TLC_WITH_ACCELERATOR |
                    SS_OPTION_WORKS_WITH_CODE_REUSE));
 }
 
@@ -249,10 +303,16 @@ static void mdlStart(SimStruct *S)
  */
 static void mdlOutputs(SimStruct *S, int_T tid)
 {
-  const int16_T *u0 = (int16_T *) ssGetInputPortRealSignal(S, 0);
-  uint8_T *y0 = (uint8_T *) ssGetOutputPortRealSignal(S, 0);
-  uint8_T *y1 = (uint8_T *) ssGetOutputPortRealSignal(S, 1);
-  int16ToBytes_Outputs_wrapper(u0, y0, y1);
+    const int16_T *u0 = (int16_T *) ssGetInputPortRealSignal(S, 0);
+    uint8_T *y0 = (uint8_T *) ssGetOutputPortRealSignal(S, 0);
+    uint8_T *y1 = (uint8_T *) ssGetOutputPortRealSignal(S, 1);
+    // Create a temporary byte array
+    uint8_T temp[2];
+    // This code just copies the bits of the int16 input into the two bytes of the output
+    // uint8 vector without any casting, shifting, etc.
+    memcpy(temp,u0,sizeof(int16_T));
+    y0[0] = temp[0];
+    y1[0] = temp[1];
 }
 
 /* Function: mdlTerminate =====================================================
