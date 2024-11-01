@@ -3,6 +3,7 @@
 
 % Add the main P1 control repo directory and scripts subdirectory to the
 % path so setup and plotting scripts can be found
+addpath('../p1/')
 addpath('../p1/_scripts/')
 
 % Load a data set that will be used to test the digital twin's performance
